@@ -1,4 +1,4 @@
-const llmKeywords = ["chat", "conversation", "generate"];
+const llmKeywords = ["chat", "conversation"];
 
 chrome.webRequest.onBeforeRequest.addListener(
 	function(details) {
