@@ -1,6 +1,6 @@
 {
 	"name": "LLM Detector",
-	"version": 1.0,
+	"version": "1.0",
 	"description": "Detects access to LLM tools based on HTTP request patterns",
 	"manifest_version": 3,
 	"permissions": [
