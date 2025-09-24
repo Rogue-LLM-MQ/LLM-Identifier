@@ -1,0 +1,23 @@
+{
+	"name": "LLM Detector",
+	"version": 1.0,
+	"description": "Detects access to LLM tools based on HTTP request patterns",
+	"manifest_version": 3,
+	"permissions": [
+	    "webRequest",
+	    "webRequestBlocking",
+	    "storage",
+	    "tabs",
+	    "activeTab",
+	    "scripting"
+	  ],
+	  "host_permissions": [
+		"<all_urls>"
+	  ],
+	  "background": {
+		"service_worker": "background.js"
+	  },
+	  "action": {
+		"default_popup": "popup.html"
+	  }
+}
