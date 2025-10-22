@@ -15,10 +15,10 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 DATA_DIR = SCRIPT_DIR.parent / "data"
 CSV_PATH = DATA_DIR / "har_combined_dataset.csv"
 
+# load dataset
 if not CSV_PATH.exists():
     raise FileNotFoundError(f"Dataset not found: {CSV_PATH}")
 
-print(f"📂 Loading dataset: {CSV_PATH}")
 df = pd.read_csv(CSV_PATH)
 
 # normalise paths by removing random noise (ie. long id's and hashes)
@@ -59,7 +59,6 @@ non_llm_down = resample(
 )
 
 balanced_df = pd.concat([llm_df, non_llm_down]).sample(frac=1, random_state=42)
-print(f"✅ Balanced dataset: {len(balanced_df)} samples")
 
 X = balanced_df[numeric_cols + ["url_text"]]
 y = balanced_df["is_llm"].astype(int)
