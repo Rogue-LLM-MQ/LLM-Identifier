@@ -1,9 +1,15 @@
 import os
 import json
 import re
+from pathlib import Path
 
-INPUT_DIR = "har_data/non_llm_hars"
-OUTPUT_DIR = "har_data/non_llm_hars_sanitised"
+SCRIPT_DIR = Path(__file__).resolve().parent
+ROOT_DIR = SCRIPT_DIR.parent
+
+DATA_DIR = ROOT_DIR / "data"
+
+INPUT_DIR = DATA_DIR / "non_llm_hars"
+OUTPUT_DIR = DATA_DIR / "non_llm_hars_sanitised"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def sanitize_har_entry(entry):

@@ -1,12 +1,15 @@
 import json
 import os
 import pandas as pd
+from pathlib import Path
 
-NON_LLM_DIR = 'har_data/non_llm_hars_sanitised'
-NON_LLM_OUTPUT_CSV = "non_llm_har_parameters_dataset.csv"
+SCRIPT_DIR = Path(__file__).resolve().parent
+ROOT_DIR = SCRIPT_DIR.parent
 
-LLM_DIR = "har_data/llm_hars"
-LLM_OUTPUT_CSV = "llm_har_parameters_dataset.csv"
+DATA_DIR = ROOT_DIR / "data"
+
+NON_LLM_DIR = DATA_DIR / "non_llm_hars_sanitised"
+LLM_DIR = DATA_DIR / "llm_hars"
 
 
 def extract_file_parameters(har_path):
@@ -99,8 +102,8 @@ def main():
     non_llm_df = pd.DataFrame(non_llm_data)
 
     non_llm_df["is_post"] = non_llm_df["method"].eq("POST")
-    non_llm_df["is_llm"] = False  # Boolean instead of string for ML use
-
+    non_llm_df["is_llm"] = False 
+    
     print(f"Processed non-LLM dataset with {len(non_llm_df)} rows.")
 
     # process llm files
@@ -119,7 +122,7 @@ def main():
     combined_df = combined_df.sample(frac=1, random_state=42).reset_index(drop=True)
 
     # save dataset to csv
-    COMBINED_OUTPUT_CSV = "har_combined_dataset.csv"
+    COMBINED_OUTPUT_CSV = DATA_DIR / "har_combined_dataset.csv"
     print(f"Saving combined dataset with {len(combined_df)} total rows to {COMBINED_OUTPUT_CSV}")
     combined_df.to_csv(COMBINED_OUTPUT_CSV, index=False, encoding="utf-8")
     print("Combined dataset saved successfully.")

@@ -3,10 +3,16 @@ import os
 import time
 import re
 from playwright.sync_api import sync_playwright
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+ROOT_DIR = SCRIPT_DIR.parent
+
+DATA_DIR = ROOT_DIR / "data"
 
 # settings
-INPUT_JSON = "non_llm_sites.json"
-OUTPUT_DIR = "har_data/non_llm_hars"
+INPUT_JSON = DATA_DIR / "non_llm_sites.json"
+OUTPUT_DIR = DATA_DIR / "non_llm_hars"
 VISIT_TIMEOUT = 30000      # timeout after 30s of inactivity
 WAIT_AFTER_LOAD = 5000     # record traffic for 5s after initial page load
 
