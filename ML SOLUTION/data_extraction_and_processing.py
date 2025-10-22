@@ -94,25 +94,35 @@ def process_files(dir):
 	return all_rows
 		
 def main():
-	non_llm_data = process_files(NON_LLM_DIR)
-	non_llm_df = pd.DataFrame(non_llm_data)
-	
-	non_llm_df["is_post"] = non_llm_df["method"].eq("POST")
-	non_llm_df["is_llm"] = "FALSE"
-	
-	print(f"💾 Saving non-llm dataset with {len(non_llm_df)} rows to {NON_LLM_OUTPUT_CSV}")
-	non_llm_df.to_csv(NON_LLM_OUTPUT_CSV, index=False, encoding="utf-8")
-	print("Done!")
-	
-	llm_data = process_files(LLM_DIR)
-	llm_df = pd.DataFrame(llm_data)
-	
-	llm_df["is_post"] = llm_df["method"].eq("POST")
-	llm_df["is_llm"] = "TRUE"
-	
-	print(f"💾 Saving llm dataset with {len(llm_df)} rows to {LLM_OUTPUT_CSV}")
-	llm_df.to_csv(LLM_OUTPUT_CSV, index=False, encoding="utf-8")
-	print("Done!")
+    # process non-llm files
+    non_llm_data = process_files(NON_LLM_DIR)
+    non_llm_df = pd.DataFrame(non_llm_data)
+
+    non_llm_df["is_post"] = non_llm_df["method"].eq("POST")
+    non_llm_df["is_llm"] = False  # Boolean instead of string for ML use
+
+    print(f"Processed non-LLM dataset with {len(non_llm_df)} rows.")
+
+    # process llm files
+    llm_data = process_files(LLM_DIR)
+    llm_df = pd.DataFrame(llm_data)
+
+    llm_df["is_post"] = llm_df["method"].eq("POST")
+    llm_df["is_llm"] = True
+
+    print(f"Processed LLM dataset with {len(llm_df)} rows.")
+
+    # combine datasets
+    combined_df = pd.concat([non_llm_df, llm_df], ignore_index=True)
+
+    # shuffle rows
+    combined_df = combined_df.sample(frac=1, random_state=42).reset_index(drop=True)
+
+    # save dataset to csv
+    COMBINED_OUTPUT_CSV = "har_combined_dataset.csv"
+    print(f"Saving combined dataset with {len(combined_df)} total rows to {COMBINED_OUTPUT_CSV}")
+    combined_df.to_csv(COMBINED_OUTPUT_CSV, index=False, encoding="utf-8")
+    print("Combined dataset saved successfully.")
 	
 if __name__ == "__main__":
     main()
