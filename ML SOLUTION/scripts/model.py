@@ -10,6 +10,8 @@ from sklearn.preprocessing import StandardScaler, FunctionTransformer
 from sklearn.linear_model import LogisticRegression
 from sklearn.utils import resample
 from sklearn.metrics import classification_report
+import joblib
+import os
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DATA_DIR = SCRIPT_DIR.parent / "data"
@@ -138,3 +140,8 @@ for i in reversed(top_indices):
 print("\n===== TOP TOKENS ASSOCIATED WITH NON-LLM TRAFFIC =====")
 for i in bottom_indices:
     print(f"{tfidf_feature_names[i]:<50} {text_coefs[i]:.3f}")
+    
+os.makedirs("../models", exist_ok=True)
+
+MODEL_PATH = "../models/llm_detector.pkl"
+joblib.dump(model, MODEL_PATH)
