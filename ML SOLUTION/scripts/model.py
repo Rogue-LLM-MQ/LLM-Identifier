@@ -124,7 +124,7 @@ print("CLASSIFICATION REPORT")
 print(classification_report(y_test, y_pred))
 
 # print numeric features in descending importance
-print("\n===== NUMERIC FEATURE IMPORTANCE =====")
+print("NUMERIC FEATURE IMPORTANCE")
 for name, coef in sorted(zip(numeric_feature_names, numeric_coefs), key=lambda x: abs(x[1]), reverse=True):
     print(f"{name:<50} {coef:.3f}")
 
@@ -133,11 +133,11 @@ top_n = 20
 top_indices = np.argsort(text_coefs)[-top_n:]
 bottom_indices = np.argsort(text_coefs)[:top_n]
 
-print("\n===== TOP TOKENS ASSOCIATED WITH LLM TRAFFIC =====")
+print("TOP TOKENS - LLM")
 for i in reversed(top_indices):
     print(f"{tfidf_feature_names[i]:<50} {text_coefs[i]:.3f}")
 
-print("\n===== TOP TOKENS ASSOCIATED WITH NON-LLM TRAFFIC =====")
+print("TOP TOKENS - NON-LLM")
 for i in bottom_indices:
     print(f"{tfidf_feature_names[i]:<50} {text_coefs[i]:.3f}")
     
