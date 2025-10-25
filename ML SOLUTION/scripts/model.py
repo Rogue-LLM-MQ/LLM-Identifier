@@ -22,16 +22,16 @@ if not CSV_PATH.exists():
 df = pd.read_csv(CSV_PATH)
 
 # normalise paths by removing random noise (ie. long id's and hashes)
-def normalize_path(path):
-    path = str(path)
-    path = re.sub(r"[a-f0-9]{8,}", "ID", path)
-    path = re.sub(r"\d+", "NUM", path)
-    path = re.sub(r"https?://[^/]+", "", path)
+def preprocess_path(path):
+    path = path.lower()
+    path = path.replace("/", " / ")
+    path = re.sub(r"([a-z])([A-Z])", r"\1 \2", path)
+    path = re.sub(r"[\._]", " ", path)
     return path
 
 # ensure filename's have text, and apply normalisation function
 df["filename"] = df["filename"].fillna("")
-df["url_text"] = df["filename"].apply(normalize_path)
+df["url_text"] = df["filename"].apply(preprocess_path)
 
 # set numeric features, and fill empty values with 0
 numeric_cols = [
@@ -66,8 +66,8 @@ y = balanced_df["is_llm"].astype(int)
 # use tf-idf on filename, with regex token to detect typical path format
 tfidf = TfidfVectorizer(
     lowercase=True,
-    token_pattern=r"[a-zA-Z0-9_\-\/\.=?&]+",
-    max_features=1000
+    token_pattern=r"[a-zA-Z][a-zA-Z0-9_\-]{2,}",
+    max_features=100
 )
 
 # set preprocessor, combining numeric and text features
@@ -96,23 +96,45 @@ model.fit(X_train, y_train)
 
 y_pred = model.predict(X_test)
 
-# print performance metrics
+# etract trained components
+classifier = model.named_steps["classifier"]
+preprocessor = model.named_steps["preprocessor"]
 
-print("\n CLASSIFICATION REPORT")
-print(classification_report(y_test, y_pred, digits=3))
+# get numeric feature names from ColumnTransformer
+numeric_feature_names = preprocessor.transformers_[0][2]
 
-# print top tf-idf tokens for both llm and non-llm paths
-tfidf_vectorizer = model.named_steps["preprocessor"].named_transformers_["txt"]
-feature_names = tfidf_vectorizer.get_feature_names_out()
-coefs = model.named_steps["classifier"].coef_[0]
+# get TF-IDF feature names
+tfidf = preprocessor.named_transformers_["txt"]
+tfidf_feature_names = tfidf.get_feature_names_out()
 
-top_positive_idx = np.argsort(coefs)[-20:]
-top_negative_idx = np.argsort(coefs)[:20]
+# combine all feature names in correct order
+feature_names = list(numeric_feature_names) + list(tfidf_feature_names)
 
-print("\n TOP TOKENS - LLM")
-for i in top_positive_idx:
-    print(f"{feature_names[i]:<50} {coefs[i]:.3f}")
+# extract coefficients
+coefs = classifier.coef_[0]
 
-print("\n TOP TOKENS - NON-LLM")
-for i in top_negative_idx:
-    print(f"{feature_names[i]:<50} {coefs[i]:.3f}")
+# split numeric vs text importance
+numeric_count = len(numeric_feature_names)
+text_coefs = coefs[numeric_count:]
+numeric_coefs = coefs[:numeric_count]
+
+print("CLASSIFICATION REPORT")
+print(classification_report(y_test, y_pred))
+
+# print numeric features in descending importance
+print("\n===== NUMERIC FEATURE IMPORTANCE =====")
+for name, coef in sorted(zip(numeric_feature_names, numeric_coefs), key=lambda x: abs(x[1]), reverse=True):
+    print(f"{name:<50} {coef:.3f}")
+
+# print top llm and non-llm tfidf tokens
+top_n = 20
+top_indices = np.argsort(text_coefs)[-top_n:]
+bottom_indices = np.argsort(text_coefs)[:top_n]
+
+print("\n===== TOP TOKENS ASSOCIATED WITH LLM TRAFFIC =====")
+for i in reversed(top_indices):
+    print(f"{tfidf_feature_names[i]:<50} {text_coefs[i]:.3f}")
+
+print("\n===== TOP TOKENS ASSOCIATED WITH NON-LLM TRAFFIC =====")
+for i in bottom_indices:
+    print(f"{tfidf_feature_names[i]:<50} {text_coefs[i]:.3f}")
