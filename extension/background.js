@@ -1,47 +1,55 @@
-// set the api server url
-const API_URL = "http://localhost:8000/predict"
+const API_URL = "http://localhost:8000/predict";
 
-// when request is completed, fire listener
-chrome.webRequest.onCompleted.addListener(
-	async (details) => {
-		try {
-			
-			// pull headers and content length from details object
-			const headers = details.responseHeaders || [];
-			const contentLengthHeader = headers.find(h => h.name.toLowerCase() === 'content-length');
-			
-			// build json payload to send to prediction model
-			const data = {
-				method: details.method,
-				request_content_length: details.requestBody ? details.requestBody.length : 0,
-				response_content_length: contentLengthHeader ? parseInt(contentLengthHeader.value) : 0,
-				response_content_size: details.responseSize || 0,
-				has_content_length: !!contentLengthHeader,
-				url_text: new URL(details.url).pathname
-			};
-			
-			// send parameters to backend for prediction
-			const res = await fetch(API_URL, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(data)
-			});
-			
-			// if llm is detected, send notification
-			if(result.is_llm){
-				console.log("LLM TRAFFIC DETECTED:", details.url, "Confidence:", result.confidence);
+// store recent URLS to track duplicates
+const sentUrls = new Set();
+const THROTTLE_MS = 500; // minimum time between sending the same URL
 
-		        chrome.notifications.create({
-					type: "basic",
-					iconUrl: "icon.png",
-					title: "Possible LLM Traffic",
-					message: `${details.url}\nConfidence: ${(result.confidence * 100).toFixed(1)}%`
-				});
-			}
-		} catch (err) {
-			console.error("Prediction error:", err);
-		}
-	},
-	{ urls: ["<all_urls>"] },
-	["responseHeaders"]
-);
+// clear recent URLs every minute
+setInterval(() => {
+  sentUrls.clear();
+}, 60 * 1000);
+
+// fire listener when new request is complete
+chrome.webRequest.onCompleted.addListener(async (details) => {
+  try {
+	
+    // filter sent requests to POST only
+    if (details.method !== "POST") return;
+    const url = new URL(details.url);
+
+    // throttle duplicates
+    const key = `${details.method}|${url.href}`;
+    if (sentUrls.has(key)) return;
+    sentUrls.add(key);
+
+    // build payload to send to prediction model
+    const headers = details.responseHeaders || [];
+    const contentLengthHeader = headers.find(h => h.name.toLowerCase() === "content-length");
+
+    const payload = {
+	  is_post: details.method === "POST",
+      request_content_length: 0, // PLACEHOLDER
+      response_content_length: contentLengthHeader ? parseInt(contentLengthHeader.value) : 0,
+      response_content_size: details.responseSize || 0,
+      has_content_length: !!contentLengthHeader,
+      url_text: url.pathname
+    };
+
+    // send to backend server
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+
+	// if LLM is detected, send to log with confidence
+    if (result.is_llm) {
+      console.log("LLM traffic detected:", details.url, "Confidence:", result.confidence);
+    }
+
+  } catch (err) {
+    console.error("Error sending request to model:", err);
+  }
+}, { urls: ["<all_urls>"] }, ["responseHeaders"]);
