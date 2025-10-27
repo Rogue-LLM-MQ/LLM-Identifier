@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "LLM Detector",
+  "version": "1.0",
+  "description": "Detects LLM-related HTTP traffic in real time",
+  "permissions": [
+    "webRequest",
+    "webRequestBlocking",
+    "notifications",
+    "storage",
+    "http://*/",
+    "https://*/"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": [
+    "<all_urls>"
+  ]
+}
