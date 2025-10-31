@@ -15,7 +15,7 @@ import os
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DATA_DIR = SCRIPT_DIR.parent / "data"
-CSV_PATH = DATA_DIR / "har_combined_dataset.csv"
+CSV_PATH = DATA_DIR / "har_combined_dataset_v2.csv"
 
 # load dataset
 if not CSV_PATH.exists():
@@ -143,5 +143,5 @@ for i in bottom_indices:
     
 os.makedirs("../models", exist_ok=True)
 
-MODEL_PATH = "../models/llm_detector.pkl"
+MODEL_PATH = "../models/llm_detector_v2.pkl"
 joblib.dump(model, MODEL_PATH)
